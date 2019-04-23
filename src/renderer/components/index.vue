@@ -86,7 +86,7 @@ export default {
             let left_bottom = area.getSouthWest();
             let right_top = area.getNorthEast();
             let mapTool = new MapTool();
-            let range = [8, 19];
+            let range = [8, 17];
             for(let z = range[0]; z <= range[1]; z ++) {
                 let left_bottom_tile = mapTool.lngLatToTile(left_bottom.lng, left_bottom.lat, z);
                 let right_top_tile = mapTool.lngLatToTile(right_top.lng, right_top.lat, z);
