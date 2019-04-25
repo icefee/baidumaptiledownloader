@@ -20,7 +20,7 @@
                 <input type="file" webkitdirectory directory/>
             </div> -->
             <div class="actions">
-                <a href="javascript:" class="btn" :class="{ disabled: downloading }" @click="download">
+                <a href="javascript:" class="btn" :class="{ disabled: downloading }" @click="downloadTiles">
                     <span class="label">{{ downloading ? '下载中(' + progress.toFixed(2) + '%)' : '开始下载' }}</span>
                     <span class="bar" :style="{ width: progress + '%' }"></span>
                 </a>
@@ -71,22 +71,19 @@ export default {
                         this.lng = lng;
                         this.lat = lat;
                     }
-                    this.compute()
+                    this.computeTiles()
                 })
             })
-            this.compute()
-        },
-        compute() {
-            this.loading = true;
-            setTimeout(this.computeTiles, 0);
+            this.computeTiles()
         },
         computeTiles() {
+            this.loading = true;
             let points = [];
             let area = this.map.getBounds();
             let left_bottom = area.getSouthWest();
             let right_top = area.getNorthEast();
             let mapTool = new MapTool();
-            let range = [8, 17];
+            let range = [17, 18];
             for(let z = range[0]; z <= range[1]; z ++) {
                 let left_bottom_tile = mapTool.lngLatToTile(left_bottom.lng, left_bottom.lat, z);
                 let right_top_tile = mapTool.lngLatToTile(right_top.lng, right_top.lat, z);
@@ -104,14 +101,9 @@ export default {
             this.points = points;
             this.loading = false;
         },
-        download() {
-            this.loading = true;
-            setTimeout(this.downloadTiles, 0);
-        },
         downloadTiles() {
             let that = this;
             that.downloading = true;
-            that.loading = false;
             downloader.downloadTiles(this.points, {
                 success() {
                     that.downloading = false;
