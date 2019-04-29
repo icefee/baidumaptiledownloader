@@ -101,23 +101,15 @@ export class DownloadTiles {
 			let xDir = `${zDir}\\${x}\\`;
 			io.mkDir(xDir)
 	
-			// let yDir = `${xDir}${y}/`
-			// mkDir(yDir)
-	
 			io.writeFile(`${xDir}${y}.png`, buffers);
 			cb(true)
 		}
 	
 		callbacks.fail = err => {
-			//
 			cb(false)
 		}
 		
 		this.fetchData(url, callbacks)
-	}
-
-	getNow() {
-		return new Date().getTime()
 	}
 
 	download(list, cbs) {
