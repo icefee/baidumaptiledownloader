@@ -3,10 +3,8 @@ const https = require('https');
 const url = require('url');
 const io = require('./io');
 
-const home = `${process.resourcesPath}\\tiles\\`;
-
 export class DownloadTiles {
-	constructor({ theme, types }) {
+	constructor({ theme, types }, dir) {
 		this.theme = theme || '';
 		this.types = types || [];
 		this.downloading = false;
@@ -19,7 +17,8 @@ export class DownloadTiles {
 				type: 'sate',
 				name: '卫星图'
 			}
-		]
+		];
+		this.dir = dir;
 	}
 
 	tileUri(type, {x, y, z}) {
@@ -91,7 +90,7 @@ export class DownloadTiles {
 		callbacks.success = res => {
 			let buffers = Buffer.concat(res);
 
-			let typeDir = `${home}${type}`;
+			let typeDir = `${this.dir}${type}`;
 			if(!io.exist(typeDir)) {
 				io.mkDir(typeDir)
 			}
@@ -148,7 +147,7 @@ export class DownloadTiles {
 	downloadTiles(points, cbs) {
 		this.downloading = true;
 		let urls = this.createUrls(points, this.types);
-		io.mkDir(home)
+		io.mkDir(this.dir);
 		this.download(urls, cbs)
 	}
 

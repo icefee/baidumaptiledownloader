@@ -15,6 +15,30 @@
             </div>
             <div class="tiles">
                 <p>视野贴图：{{ tiles }}</p>
+                <p :style="{ margin: '0 20px' }">
+                    地图类型：
+                    <input type="checkbox" name="type" id="street" value="街道图" v-model="types" :disabled="downloading"/>
+                    <label for="street" :style="{ marginRight: '5px' }">街道图</label>
+                    <input type="checkbox" name="type" id="sate" value="卫星图" v-model="types" :disabled="downloading"/>
+                    <label for="sate">卫星图</label>
+                </p>
+                <p>主题：</p>
+                <p>
+                    <select name="theme" v-model="theme" :disabled="downloading">
+                        <option value="">常规</option>
+                        <option value="light">清新蓝</option>
+                        <option value="dark">黑夜</option>
+                        <option value="redalert">红色警戒</option>
+                        <option value="googlelite">精简</option>
+                        <option value="grassgreen">自然绿</option>
+                        <option value="midnight">午夜蓝</option>
+                        <option value="pink">浪漫粉</option>
+                        <option value="darkgreen">青春绿</option>
+                        <option value="bluish">清新蓝</option>
+                        <option value="grayscale">高端灰</option>
+                        <option value="hardedge">强边界</option>
+                    </select>
+                </p>
             </div>
             <!-- <div class="path">
                 <input type="file" webkitdirectory directory/>
@@ -24,19 +48,18 @@
                     <span class="label">{{ downloading ? '下载中(' + progress.toFixed(2) + '%)' : '开始下载' }}</span>
                     <span class="bar" :style="{ width: progress + '%' }"></span>
                 </a>
+                <a href="javascript:" class="btn danger" v-if="downloading" :style="{ marginLeft: '10px' }" @click="stopDownload">停止</a>
             </div>
         </div>
     </div>
 </template>
 
 <script>
-const { ipcRenderer } = require('electron');
-import { setTimeout } from 'timers';
+const { ipcRenderer, shell } = require('electron');
 const map = require('./../libs/map');
 const { MapTool } = require('./../libs/maptool');
 const { DownloadTiles } = require('./../libs/download');
-let types = ['街道图', '卫星图'], theme = '';
-const downloader = new DownloadTiles({ types, theme });
+const home = `${process.resourcesPath}\\tiles\\`;
 
 export default {
     data() {
@@ -46,10 +69,12 @@ export default {
             lat: 39.9109240000,
             zoom: 12,
             points: [],
-            tiles: 0,
+            types: ['街道图'],
+            theme: '',
             loading: false,
             downloading: false,
-            progress: 0
+            progress: 0,
+            downloader: null
         }
     },
     methods: {
@@ -57,7 +82,6 @@ export default {
             let { lng, lat, zoom } = this;
             let option = { lng, lat, zoom };
             this.map = await map.init('map', option);
-            this.map.setMinZoom(12);
             [
                 'zoomend',
                 'moveend'
@@ -83,7 +107,7 @@ export default {
             let left_bottom = area.getSouthWest();
             let right_top = area.getNorthEast();
             let mapTool = new MapTool();
-            let range = [17, 18];
+            let range = [8, 18];
             for(let z = range[0]; z <= range[1]; z ++) {
                 let left_bottom_tile = mapTool.lngLatToTile(left_bottom.lng, left_bottom.lat, z);
                 let right_top_tile = mapTool.lngLatToTile(right_top.lng, right_top.lat, z);
@@ -97,24 +121,40 @@ export default {
                     }
                 }
             }
-            this.tiles = points.length;
             this.points = points;
             this.loading = false;
         },
         downloadTiles() {
             let that = this;
             that.downloading = true;
-            downloader.downloadTiles(this.points, {
+            let { types, theme } = this;
+            this.downloader = new DownloadTiles({ types, theme }, home);
+            this.downloader.downloadTiles(this.points, {
                 success() {
                     that.downloading = false;
                     that.progress = 0;
+                    shell.openItem(home);
                 },
                 process(val) {
                     if(!that.downloading) return;
-                    ipcRenderer.send('handle-process', val)
+                    that.setProcess(val);
                     that.progress = val * 100;
                 }
             })
+        },
+        setProcess(val) {
+            ipcRenderer.send('handle-process', val)
+        },
+        stopDownload() {
+            this.downloader.stop();
+            this.downloading = false;
+            this.progress = 0;
+            this.setProcess(0);
+        }
+    },
+    computed: {
+        tiles() {
+            return this.points.length * this.types.length;
         }
     },
     mounted() {
@@ -162,6 +202,21 @@ export default {
 
 .tool-bar p {
     font-size: 12px;
+}
+
+.tiles, .actions {
+    display: flex;
+}
+
+select[name=theme] {
+    background: #001529;
+    color: #fff;
+    font-family: 'microsoft yahei', 'helvetica', 'simhei', 'simsun', 'sans-serif';
+    font-size: 11px;
+}
+
+input[type=checkbox] {
+    vertical-align: middle;
 }
 
 .actions .btn {
