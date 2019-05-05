@@ -125,6 +125,13 @@ export default {
             this.loading = false;
         },
         downloadTiles() {
+            if(!this.types.length) {
+                ipcRenderer.send('app-showMessageBox', {
+                    type: 'info',
+                    message: '请至少选择一种地图类型'
+                })
+                return;
+            }
             let that = this;
             that.downloading = true;
             let { types, theme } = this;

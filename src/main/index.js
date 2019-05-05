@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog } from 'electron'
 
 /**
  * Set `__static` path to static files in production
@@ -79,4 +79,9 @@ ipcMain.on('app-ctrl', (ev, val) => {
 ipcMain.on('app-ismax', ev => {
   let isMax = mainWindow.isMaximized();
   ev.returnValue = isMax;
+})
+
+ipcMain.on('app-showMessageBox', (ev, option) => {
+  dialog.showMessageBox(mainWindow, option);
+  ev.returnValue = true;
 })
