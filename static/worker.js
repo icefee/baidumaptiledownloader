@@ -1,4 +1,8 @@
-export class MapTool {
+process.on('message', params => {
+    process.send(compute(params))
+})
+
+class MapTool {
     constructor() {
         this.Wm = [75, 60, 45, 30, 15, 0];
         this.bv = [
@@ -77,4 +81,24 @@ export class MapTool {
         a = Math.min(a, c);
         return a;
     }
+}
+
+const compute = ({ map, range }) => {
+    let { left_bottom, right_top } = map;
+    let points = [];
+    let tool = new MapTool();
+    for(let z = range[0]; z <= range[1]; z ++) {
+        let left_bottom_tile = tool.lngLatToTile(left_bottom.lng, left_bottom.lat, z);
+        let right_top_tile = tool.lngLatToTile(right_top.lng, right_top.lat, z);
+        for(let x = left_bottom_tile.x; x <= right_top_tile.x; x ++) {
+            for(let y = left_bottom_tile.y; y <= right_top_tile.y; y ++) {
+                points.push({
+                    x,
+                    y,
+                    z
+                })
+            }
+        }
+    }
+    return points;
 }

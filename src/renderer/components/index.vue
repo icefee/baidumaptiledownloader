@@ -44,7 +44,7 @@
                 <input type="file" webkitdirectory directory/>
             </div> -->
             <div class="actions">
-                <a href="javascript:" class="btn" :class="{ disabled: downloading }" @click="downloadTiles">
+                <a href="javascript:" class="btn" :class="{ disabled: loading || downloading }" @click="downloadTiles">
                     <span class="label">{{ downloading ? '下载中(' + progress.toFixed(2) + '%)' : '开始下载' }}</span>
                     <span class="bar" :style="{ width: progress + '%' }"></span>
                 </a>
@@ -56,14 +56,15 @@
 
 <script>
 const { ipcRenderer, shell } = require('electron');
+const cp = require('child_process');
 const map = require('./../libs/map');
-const { MapTool } = require('./../libs/maptool');
 const { DownloadTiles } = require('./../libs/download');
 const home = `${process.resourcesPath}\\tiles\\`;
 
 export default {
     data() {
         return {
+            child: null,
             map: null,
             lng: 116.4133870000,
             lat: 39.9109240000,
@@ -98,31 +99,23 @@ export default {
                     this.computeTiles()
                 })
             })
+            this.child = cp.fork(`${__static}\\worker.js`);
+            this.child.on('message', result => {
+                this.points = result;
+                this.loading = false;
+            })
             this.computeTiles()
         },
         computeTiles() {
             this.loading = true;
-            let points = [];
             let area = this.map.getBounds();
             let left_bottom = area.getSouthWest();
             let right_top = area.getNorthEast();
-            let mapTool = new MapTool();
             let range = [8, 18];
-            for(let z = range[0]; z <= range[1]; z ++) {
-                let left_bottom_tile = mapTool.lngLatToTile(left_bottom.lng, left_bottom.lat, z);
-                let right_top_tile = mapTool.lngLatToTile(right_top.lng, right_top.lat, z);
-                for(let x = left_bottom_tile.x; x <= right_top_tile.x; x ++) {
-                    for(let y = left_bottom_tile.y; y <= right_top_tile.y; y ++) {
-                        points.push({
-                            x,
-                            y,
-                            z
-                        })
-                    }
-                }
-            }
-            this.points = points;
-            this.loading = false;
+            this.child.send({
+                map: { left_bottom, right_top },
+                range
+            })
         },
         downloadTiles() {
             if(!this.types.length) {
