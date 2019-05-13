@@ -160,6 +160,11 @@ export default {
     mounted() {
         this.init()
     },
+    watch: {
+        theme(value) {
+            map.setMapStyle(value)
+        }
+    },
 }
 </script>
 

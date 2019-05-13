@@ -33,8 +33,7 @@ const createMap = (id, option) => {
     map.enableScrollWheelZoom(true);
     let offset = new BMap.Size(20, 20);
     let navigationControl = new BMap.NavigationControl({
-        anchor: BMAP_ANCHOR_TOP_RIGHT,
-        type: BMAP_NAVIGATION_CONTROL_SMALL,
+        anchor: BMAP_ANCHOR_TOP_LEFT,
         offset
     });
     map.addControl(navigationControl);
@@ -43,6 +42,7 @@ const createMap = (id, option) => {
         offset
     }));
     // map.setMapStyle({ style: MAP_THEME });
+    map.addControl(new BMap.MapTypeControl());
     setPosition(option);
     return map;
 }
@@ -51,6 +51,10 @@ export const setPosition = option => {
     let { lng, lat, zoom } = option;
     let point = createPoint(lng, lat);
     map.centerAndZoom(point, zoom);
+}
+
+export const setMapStyle = style => {
+    map.setMapStyle({ style });
 }
 
 const createPoint = (lat, lng) => {
