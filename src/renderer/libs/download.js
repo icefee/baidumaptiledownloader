@@ -18,7 +18,7 @@ export class DownloadTiles {
 				name: '卫星图'
 			}
 		];
-		this.dir = dir;
+		this.dir = dir + '\\tiles\\';
 	}
 
 	tileUri(type, {x, y, z}) {
@@ -113,6 +113,7 @@ export class DownloadTiles {
 	}
 
 	download(list, cbs) {
+		let SUCCESS = 0, FAIL = 0;
 		let index = 0;
 		let imgCount = list.length;
 		let run = () => {
@@ -121,15 +122,14 @@ export class DownloadTiles {
 			}
 
 			this.downloadTile(list[index], res => {
-				if(res) {
-					cbs.process((index + 1) / imgCount);
-					if(index < imgCount - 1) {
-						index ++;
-						run()
-					}
-					else {
-						cbs.success()
-					}
+				res ? SUCCESS ++ : FAIL ++;
+				cbs.process((index + 1) / imgCount);
+				if(index < imgCount - 1) {
+					index ++;
+					run()
+				}
+				else {
+					cbs.success({ SUCCESS, FAIL })
 				}
 			})
 		}

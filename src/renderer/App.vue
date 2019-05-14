@@ -27,6 +27,10 @@ html, body {
   font-family: microsoft yahei, helvetica, simhei,simsun, sans-serif;
 }
 
+input {
+  outline: 0;
+}
+
 #app {
   position: relative;
   height: 100%;

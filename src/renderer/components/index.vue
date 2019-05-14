@@ -22,7 +22,7 @@
                     <input type="checkbox" name="type" id="sate" value="卫星图" v-model="types" :disabled="downloading"/>
                     <label for="sate">卫星图</label>
                 </p>
-                <p>主题：</p>
+                <p :style="{ marginLeft: '15px' }">地图样式：</p>
                 <p>
                     <select name="theme" v-model="theme" :disabled="downloading">
                         <option value="">常规</option>
@@ -39,10 +39,14 @@
                         <option value="hardedge">强边界</option>
                     </select>
                 </p>
+                <p :style="{ marginLeft: '15px' }">
+                    下载路径：
+                    <span class="path">
+                        <input type="file" ref="dir" webkitdirectory directory @change="setPath"/>
+                        <input type="text" @click="$refs.dir.click()" v-model="path" readonly/>
+                    </span>
+                </p>
             </div>
-            <!-- <div class="path">
-                <input type="file" webkitdirectory directory/>
-            </div> -->
             <div class="actions">
                 <a href="javascript:" class="btn" :class="{ disabled: loading || downloading }" @click="computeTiles">
                     <span class="label">{{ downloading ? '下载中(' + progress.toFixed(2) + '%)' : '开始下载' }}</span>
@@ -66,7 +70,7 @@ const { ipcRenderer, shell } = require('electron');
 const cp = require('child_process');
 const map = require('./../libs/map');
 const { DownloadTiles } = require('./../libs/download');
-const home = `${process.resourcesPath}\\tiles\\`;
+const home = process.resourcesPath;
 
 export default {
     data() {
@@ -83,6 +87,7 @@ export default {
             downloading: false,
             progress: 0,
             downloader: null,
+            path: home,
             status: '暂无下载中的任务'
         }
     },
@@ -143,14 +148,14 @@ export default {
             this.setStatus(2);
             let that = this;
             that.downloading = true;
-            let { types, theme } = this;
-            this.downloader = new DownloadTiles({ types, theme }, home);
-            this.downloader.downloadTiles(this.points, {
-                success() {
+            let { types, theme } = that;
+            that.downloader = new DownloadTiles({ types, theme }, that.path);
+            that.downloader.downloadTiles(that.points, {
+                success({ SUCCESS, FAIL }) {
                     that.downloading = false;
                     that.progress = 0;
-                    that.setStatus(0);
-                    shell.openItem(home);
+                    that.status = `下载完成, 成功：${SUCCESS}, 失败：${FAIL}`;
+                    shell.openItem(that.path);
                 },
                 process(val) {
                     if(!that.downloading) return;
@@ -176,6 +181,12 @@ export default {
                 '正在下载贴图...'
             ];
             this.status = labels[state]
+        },
+        setPath(e) {
+            if(!e.target.files.length) {
+                return;
+            }
+            this.path = e.target.files[0].path;
         }
     },
     computed: {
@@ -239,7 +250,7 @@ export default {
     display: flex;
 }
 
-select[name=theme] {
+select[name=theme], input[type=text] {
     background: #001529;
     color: #fff;
     font-family: 'microsoft yahei', 'helvetica', 'simhei', 'simsun', 'sans-serif';
@@ -248,6 +259,30 @@ select[name=theme] {
 
 input[type=checkbox] {
     vertical-align: middle;
+}
+
+.path {
+    position: relative;
+    border: 1px solid #aaa;
+}
+
+.path input[type=file] {
+    display: block;
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+}
+
+.path input[type=text] {
+    width: 250px;
+    height: 19px;
+    line-height: 19px;
+    border: 1px solid #ddd;
+}
+
+.path span {
+    font-size: 12px;
 }
 
 .actions .btn {
