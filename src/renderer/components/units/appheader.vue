@@ -1,6 +1,6 @@
 <template>
     <div class="header">
-        <div class="title">离线地图下载</div>
+        <div class="title">百度地图贴图下载工具</div>
         <div class="control">
             <a class="minimize" @click="minimize">
                 <svg>

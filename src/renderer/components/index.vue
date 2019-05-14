@@ -12,14 +12,14 @@
                 <!-- <p>视野贴图：{{ tiles }}</p> -->
                 <p>
                     地图类型：
-                    <input type="checkbox" name="type" id="street" value="街道图" v-model="types" :disabled="downloading"/>
+                    <input type="checkbox" name="type" id="street" value="街道图" v-model="types"/>
                     <label for="street" :style="{ marginRight: '5px' }">街道图</label>
-                    <input type="checkbox" name="type" id="sate" value="卫星图" v-model="types" :disabled="downloading"/>
+                    <input type="checkbox" name="type" id="sate" value="卫星图" v-model="types"/>
                     <label for="sate">卫星图</label>
                 </p>
                 <p :style="{ marginLeft: '15px' }">地图样式：</p>
                 <p>
-                    <select name="theme" v-model="theme" :disabled="downloading">
+                    <select name="theme" v-model="theme">
                         <option value="">常规</option>
                         <option value="light">清新蓝</option>
                         <option value="dark">黑夜</option>
