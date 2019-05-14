@@ -2,11 +2,6 @@
     <div class="index">
         <div class="map-wrap">
             <div id="map"></div>
-            <transition name="fade">
-                <div class="loading" v-show="loading">
-                    <span>加载中...</span>
-                </div>
-            </transition>
         </div>
         <div class="tool-bar">
             <!-- <div class="status">
@@ -48,7 +43,7 @@
                 </p>
             </div>
             <div class="actions">
-                <a href="javascript:" class="btn" :class="{ disabled: loading || downloading }" @click="computeTiles">
+                <a href="javascript:" class="btn" :class="{ disabled: downloading }" @click="computeTiles">
                     <span class="label">{{ downloading ? '下载中(' + progress.toFixed(2) + '%)' : '开始下载' }}</span>
                     <span class="bar" :style="{ width: progress + '%' }"></span>
                 </a>
@@ -83,7 +78,6 @@ export default {
             points: [],
             types: ['街道图'],
             theme: '',
-            loading: false,
             downloading: false,
             progress: 0,
             downloader: null,
@@ -114,7 +108,6 @@ export default {
             this.child = cp.fork(`${__static}\\worker.js`);
             this.child.on('message', result => {
                 this.points = result;
-                this.loading = false;
                 this.downloadTiles();
             })
         },
@@ -126,7 +119,6 @@ export default {
                 })
                 return;
             }
-            this.loading = true;
             this.setStatus(1);
             let area = this.map.getBounds();
             let left_bottom = area.getSouthWest();
@@ -207,26 +199,7 @@ export default {
 
 <style scoped>
 .map-wrap {
-    position: relative;
     height: calc(100% - 65px);
-}
-
-.loading {
-    display: flex;
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    justify-content: center;
-    align-items: center;
-    background: rgba(0, 0, 0, .5);
-    z-index: 1200;
-}
-
-.loading span {
-    color: #fff;
-    font-size: 14px;
 }
 
 #map {
