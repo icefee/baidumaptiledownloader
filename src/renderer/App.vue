@@ -32,6 +32,7 @@ html, body {
   height: 100%;
   background: #001529;
   color: #ccc;
+  border: 1px solid #555;
 }
 
 .view {

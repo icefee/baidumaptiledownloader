@@ -9,13 +9,13 @@
             </transition>
         </div>
         <div class="tool-bar">
-            <div class="status">
+            <!-- <div class="status">
                 <p>当前位置：{{ lng }}, {{ lat }}</p>
                 <p>当前缩放：{{ zoom }}</p>
-            </div>
+            </div> -->
             <div class="tiles">
-                <p>视野贴图：{{ tiles }}</p>
-                <p :style="{ margin: '0 20px' }">
+                <!-- <p>视野贴图：{{ tiles }}</p> -->
+                <p>
                     地图类型：
                     <input type="checkbox" name="type" id="street" value="街道图" v-model="types" :disabled="downloading"/>
                     <label for="street" :style="{ marginRight: '5px' }">街道图</label>
@@ -44,12 +44,19 @@
                 <input type="file" webkitdirectory directory/>
             </div> -->
             <div class="actions">
-                <a href="javascript:" class="btn" :class="{ disabled: loading || downloading }" @click="downloadTiles">
+                <a href="javascript:" class="btn" :class="{ disabled: loading || downloading }" @click="computeTiles">
                     <span class="label">{{ downloading ? '下载中(' + progress.toFixed(2) + '%)' : '开始下载' }}</span>
                     <span class="bar" :style="{ width: progress + '%' }"></span>
                 </a>
                 <a href="javascript:" class="btn danger" v-if="downloading" :style="{ marginLeft: '10px' }" @click="stopDownload">停止</a>
             </div>
+        </div>
+        <div class="status-bar">
+            <p>
+                <span>当前位置：{{ lng }}, {{ lat }}</span>
+                <span :style="{ marginLeft: '10px' }">当前缩放：{{ zoom }}</span>
+            </p>
+            <p class="status">{{ status }}</p>
         </div>
     </div>
 </template>
@@ -75,7 +82,8 @@ export default {
             loading: false,
             downloading: false,
             progress: 0,
-            downloader: null
+            downloader: null,
+            status: '暂无下载中的任务'
         }
     },
     methods: {
@@ -96,22 +104,29 @@ export default {
                         this.lng = lng;
                         this.lat = lat;
                     }
-                    this.computeTiles()
                 })
             })
             this.child = cp.fork(`${__static}\\worker.js`);
             this.child.on('message', result => {
                 this.points = result;
                 this.loading = false;
+                this.downloadTiles();
             })
-            this.computeTiles()
         },
         computeTiles() {
+            if(this.zoom < 10) {
+                ipcRenderer.send('app-showMessageBox', {
+                    type: 'info',
+                    message: '地图范围太大, 请缩小地图缩放至10以上'
+                })
+                return;
+            }
             this.loading = true;
+            this.setStatus(1);
             let area = this.map.getBounds();
             let left_bottom = area.getSouthWest();
             let right_top = area.getNorthEast();
-            let range = [8, 18];
+            let range = [8, 19];
             this.child.send({
                 map: { left_bottom, right_top },
                 range
@@ -125,6 +140,7 @@ export default {
                 })
                 return;
             }
+            this.setStatus(2);
             let that = this;
             that.downloading = true;
             let { types, theme } = this;
@@ -133,6 +149,7 @@ export default {
                 success() {
                     that.downloading = false;
                     that.progress = 0;
+                    that.setStatus(0);
                     shell.openItem(home);
                 },
                 process(val) {
@@ -150,6 +167,15 @@ export default {
             this.downloading = false;
             this.progress = 0;
             this.setProcess(0);
+            this.setStatus(0);
+        },
+        setStatus(state) {
+            let labels = [
+                '暂无下载中的任务',
+                '正在计算地图贴图...',
+                '正在下载贴图...'
+            ];
+            this.status = labels[state]
         }
     },
     computed: {
@@ -171,7 +197,7 @@ export default {
 <style scoped>
 .map-wrap {
     position: relative;
-    height: calc(100% - 40px);
+    height: calc(100% - 65px);
 }
 
 .loading {
@@ -256,5 +282,14 @@ input[type=checkbox] {
 .btn.disabled {
     pointer-events: none;
 }
-</style>
 
+.status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 5px;
+    height: 25px;
+    font-size: 12px;
+    border-top: 1px solid #555;
+}
+</style>
