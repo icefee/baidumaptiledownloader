@@ -84,56 +84,47 @@ export class DownloadTiles {
 		})
 	}
 
-	downloadTile({ x, y, z, type, url }, cb) {
-		let callbacks = {}
-	
-		callbacks.success = res => {
-			let buffers = Buffer.concat(res);
-
-			let typeDir = `${this.dir}${type}`;
-			if(!io.exist(typeDir)) {
-				io.mkDir(typeDir)
+	downloadTile({ x, y, z, type, url }) {
+		return new Promise(resolve => {
+			let callbacks = {}
+			
+			callbacks.success = res => {
+				let buffers = Buffer.concat(res);
+				let typeDir = `${this.dir}${type}`;
+				if(!io.exist(typeDir)) {
+					io.mkDir(typeDir)
+				}
+				
+				let zDir = `${typeDir}\\${z}\\`;
+				io.mkDir(zDir)
+				
+				let xDir = `${zDir}\\${x}\\`;
+				io.mkDir(xDir)
+				
+				io.writeFile(`${xDir}${y}.png`, buffers);
+				resolve(1);
 			}
-	
-			let zDir = `${typeDir}\\${z}\\`;
-			io.mkDir(zDir)
-	
-			let xDir = `${zDir}\\${x}\\`;
-			io.mkDir(xDir)
-	
-			io.writeFile(`${xDir}${y}.png`, buffers);
-			cb(true)
-		}
-	
-		callbacks.fail = err => {
-			cb(false)
-		}
-		
-		this.fetchData(url, callbacks)
+			
+			callbacks.fail = err => {
+				resolve(0)
+			}
+			
+			this.fetchData(url, callbacks)
+		})
 	}
 
-	download(list, cbs) {
+	async download(list, cbs) {
 		let SUCCESS = 0, FAIL = 0;
-		let index = 0;
-		let imgCount = list.length;
-		let run = () => {
-			if(!this.downloading) {
-				return;
-			}
-
-			this.downloadTile(list[index], res => {
-				res ? SUCCESS ++ : FAIL ++;
-				cbs.process((index + 1) / imgCount);
-				if(index < imgCount - 1) {
-					index ++;
-					run()
-				}
-				else {
-					cbs.success({ SUCCESS, FAIL })
-				}
-			})
+		if(!this.downloading) {
+			return;
 		}
-		run()
+
+		for(let i = 0; i < list.length; i ++) {
+			let res = await this.downloadTile(list[i]);
+			res ? SUCCESS ++ : FAIL ++;
+			cbs.process((i + 1) / list.length);
+		}
+		cbs.success({ SUCCESS, FAIL })
 	}
 
 	downloadTiles(points, cbs) {
