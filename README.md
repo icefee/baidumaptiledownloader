@@ -1,6 +1,6 @@
-# monitor
+# 百度地图贴图下载工具
 
-> a monitor based on electron
+> 基于electron的百度地图贴图下载工具
 
 #### Build Setup
 
